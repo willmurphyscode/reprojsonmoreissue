@@ -44,7 +44,35 @@ func main() {
 		}
 		decodedItems = append(decodedItems, maps.Clone(data))
 	}
-	fmt.Printf("Decoded %d items in %d iterations\n", len(decodedItems), iterations)
+	fmt.Printf("From squashFS reader, %d items in %d iterations\n", len(decodedItems), iterations)
+	if len(decodedItems) > 0 {
+		fmt.Printf("First item: %v\n", decodedItems[0])
+	}
+
+	fmt.Println("Now try just opening the file directly")
+	directR, err := os.Open("testdata/package.json")
+	if err != nil {
+		panic(err)
+	}
+	data = make(map[string]interface{})
+	decodedItems = nil
+	decoder = json.NewDecoder(directR)
+	iterations = 0
+	for decoder.More() {
+		iterations++
+		if iterations > giveUpAfter {
+			break
+		}
+		err = decoder.Decode(&data)
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				break
+			}
+			panic(err)
+		}
+		decodedItems = append(decodedItems, maps.Clone(data))
+	}
+	fmt.Printf("from host file system, %d items in %d iterations\n", len(decodedItems), iterations)
 	if len(decodedItems) > 0 {
 		fmt.Printf("First item: %v\n", decodedItems[0])
 	}
